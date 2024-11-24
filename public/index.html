@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Catalog</title>
+  <link rel="stylesheet" href="styles/style.css">
+  <script src="js/api.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+
+<body>
+<div class="container">
+  <header class="header">
+    <h1>Music Catalog</h1>
+  </header>
+
+  <!-- Seções de Listagem -->
+  <section class="list-section">
+    <h2>Álbuns</h2>
+    <div id="albums-list" class="list-container">
+      <!-- Discos serão carregados aqui -->
+    </div>
+  </section>
+
+  <section class="list-section">
+    <h2>Artistas</h2>
+    <div id="artists-list" class="list-container">
+      <!-- Artistas serão carregados aqui -->
+    </div>
+  </section>
+
+  <section class="list-section">
+    <h2>Gêneros</h2>
+    <div id="genres-list" class="list-container">
+      <!-- Gêneros serão carregados aqui -->
+    </div>
+  </section>
+
+  <!-- Seções de Formulários -->
+  <section class="form-section">
+    <h2>Adicionar Novo Álbum</h2>
+    <form id="albumForm">
+      <label for="album-title">Título</label>
+      <input type="text" id="album-title" name="title" placeholder="Título do Álbum" required>
+
+      <label for="album-year">Ano de Lançamento</label>
+      <input type="number" id="album-year" name="year" placeholder="Ano de Lançamento" required>
+
+      <label for="album-tracks">Faixas</label>
+      <textarea id="album-tracks" name="tracks" placeholder="Lista de faixas no formato título|duração, separadas por vírgula" required></textarea>
+
+      <label for="album-artists">Artistas</label>
+      <select id="album-artists" name="artists" multiple required>
+        <!-- Opções de artistas serão carregadas aqui -->
+      </select>
+
+      <label for="album-genres">Gêneros</label>
+      <select id="album-genres" name="genres" multiple required>
+        <!-- Opções de gêneros serão carregadas aqui -->
+      </select>
+
+      <button type="submit">Adicionar Álbum</button>
+    </form>
+  </section>
+
+  <section class="form-section">
+    <h2>Adicionar Novo Artista</h2>
+    <form id="artistForm">
+      <label for="artist-name">Nome do Artista</label>
+      <input type="text" id="artist-name" name="name" placeholder="Nome do Artista" required>
+
+      <label for="artist-genre">Gênero</label>
+      <input type="text" id="artist-genre" name="genre" placeholder="Gênero do Artista" required>
+
+      <button type="submit">Adicionar Artista</button>
+    </form>
+  </section>
+
+  <section class="form-section">
+    <h2>Adicionar Novo Gênero</h2>
+    <form id="genreForm">
+      <label for="genre-name">Nome do Gênero</label>
+      <input type="text" id="genre-name" name="name" placeholder="Nome do Gênero" required>
+
+      <button type="submit">Adicionar Gênero</button>
+    </form>
+  </section>
+</div>
+</body>
+
+</html>
