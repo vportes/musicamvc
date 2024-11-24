@@ -132,9 +132,48 @@ app.get('/api/artists', async (req, res) => {
 
 app.post('/api/artists', async (req, res) => {
     try {
-        const { name, genre } = req.body;
-        const artist = await Artist.create({ name, genre });
+        const { name, genre, albumIds, genreIds } = req.body; // Alteração aqui para receber genreIds
+        const artist = await Artist.create({ name });
+
+        if (genreIds && genreIds.length > 0) {
+            const genres = await Genre.findAll({ where: { id: genreIds } });
+            await artist.setGenres(genres);
+        }
+
+        if (albumIds && albumIds.length > 0) {
+            const albums = await Album.findAll({ where: { id: albumIds } });
+            await artist.setAlbums(albums);
+        }
+
         res.status(201).json(artist);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/api/artists/:id', async (req, res) => {
+    try {
+        const { name, genre, genreIds, albumIds } = req.body;
+        const artist = await Artist.findByPk(req.params.id);
+
+        if (!artist) {
+            return res.status(404).json({ error: 'Artista não encontrado' });
+        }
+
+        artist.name = name;
+        await artist.save();
+
+        if (genreIds && genreIds.length > 0) {
+            const genres = await Genre.findAll({ where: { id: genreIds } });
+            await artist.setGenres(genres);
+        }
+
+        if (albumIds && albumIds.length > 0) {
+            const albums = await Album.findAll({ where: { id: albumIds } });
+            await artist.setAlbums(albums);
+        }
+
+        res.json(artist);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -32,6 +32,9 @@ db.Artist.belongsToMany(db.Album, { through: 'AlbumArtists', as: 'albums' });
 db.Album.belongsToMany(db.Genre, { through: 'AlbumGenres', as: 'genres' });
 db.Genre.belongsToMany(db.Album, { through: 'AlbumGenres', as: 'albums' });
 
+db.Artist.belongsToMany(db.Genre, { through: 'ArtistGenres', as: 'genres' });
+db.Genre.belongsToMany(db.Artist, { through: 'ArtistGenres', as: 'artists' });
+
 db.Track.belongsTo(db.Album, { as: 'album' });
 db.Album.hasMany(db.Track, { as: 'tracks' });
 
@@ -41,7 +44,7 @@ sequelize.sync({ force: false })
     })
     .catch((error) => {
         console.error("Erro ao sincronizar o banco de dados:", error);
-        process.exit(1); // Encerra o processo com erro se a sincronização falhar
+        process.exit(1);
     });
 
 module.exports = db;

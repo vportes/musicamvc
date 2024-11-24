@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     Artistas: ${album.artists.map(artist => artist.name).join(', ')}<br>
                     Faixas: ${album.tracks.map(track => track.title).join(', ')}<br>
                     Gêneros: ${album.genres.map(genre => genre.name).join(', ')}<br>
-                    <button onclick="updateAlbum(${album.id})">Editar</button>
-                    <button onclick="deleteAlbum(${album.id})">Excluir</button>
+                    <button class="primary-button" onclick="updateAlbum(${album.id})">Editar</button>
+                    <button class="primary-button" onclick="deleteAlbum(${album.id})">Excluir</button>
                 `;
                     albumList.appendChild(li);
 
@@ -53,20 +53,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('/api/artists');
             if (response.ok) {
                 const artists = await response.json();
+                const artistList = document.getElementById('artists-list');
                 artistList.innerHTML = '';
-                albumArtistsSelect.innerHTML = '';
                 artists.forEach(artist => {
                     const li = document.createElement('li');
                     li.innerHTML = `
-                        <strong>${artist.name}</strong> - Gênero: ${artist.genre}<br>
-                        <button onclick="updateArtist(${artist.id})">Editar</button>
-                        <button onclick="deleteArtist(${artist.id})">Excluir</button>
+                        <strong>${artist.name}</strong> - Gêneros: ${artist.genres.map(genre => `${genre.name} (ID: ${genre.id})`).join(', ')}<br>
+                        <button class="primary-button" onclick="updateArtist(${artist.id})">Editar</button>
+                        <button class="primary-button" onclick="deleteArtist(${artist.id})">Excluir</button>
                     `;
                     artistList.appendChild(li);
-                    const option = document.createElement('option');
-                    option.value = artist.id;
-                    option.text = artist.name;
-                    albumArtistsSelect.appendChild(option);
                 });
             } else {
                 console.error('Erro ao listar artistas:', response.statusText);
@@ -83,20 +79,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const genres = await response.json();
                 const genreSelect = document.getElementById('artist-genre');
                 genreSelect.innerHTML = '';
-                genreList.innerHTML = '';
-                albumGenresSelect.innerHTML = '';
                 genres.forEach(genre => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <strong>${genre.name}</strong><br>
-                        <button onclick="updateGenre(${genre.id})">Editar</button>
-                        <button onclick="deleteGenre(${genre.id})">Excluir</button>
-                    `;
-                    genreList.appendChild(li);
                     const option = document.createElement('option');
                     option.value = genre.id;
-                    option.text = genre.name;
-                    albumGenresSelect.appendChild(option);
+                    option.text = `${genre.name} (ID: ${genre.id})`;
+                    genreSelect.appendChild(option);
                 });
             } else {
                 console.error('Erro ao listar gêneros:', response.statusText);
@@ -144,21 +131,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
 
         const name = document.getElementById('artist-name').value;
-        const genre = document.getElementById('artist-genre').value;
+        const genres = Array.from(document.getElementById('artist-genre').selectedOptions).map(option => option.value);
         const albums = Array.from(document.getElementById('artist-albums').selectedOptions).map(option => option.value);
 
         try {
             const response = await fetch('/api/artists', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, genre, albumIds: albums }),
+                body: JSON.stringify({ name, genreIds: genres, albumIds: albums }),
             });
 
             if (response.ok) {
                 alert('Artista criado com sucesso!');
                 await displayArtists();
             } else {
-                alert('Erro ao criar artista');
+                const errorMessage = await response.json();
+                alert('Erro ao criar artista: ' + errorMessage.error);
             }
         } catch (error) {
             console.error('Erro ao criar artista:', error);
@@ -229,18 +217,21 @@ async function deleteAlbum(id) {
 }
 
 async function updateArtist(id) {
-    const newName = prompt('Digite o novo nome do artista:');
-    const newGenre = prompt('Digite o novo gênero do artista:');
+    const name = prompt('Digite o novo nome do artista:');
+    const genreIds = prompt('Digite os IDs dos novos gêneros, separados por vírgula:', '').split(',').map(id => id.trim());
+
     const response = await fetch(`/api/artists/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName, genre: newGenre })
+        body: JSON.stringify({ name, genreIds })
     });
+
     if (response.ok) {
         alert('Artista atualizado com sucesso!');
         await displayArtists();
     } else {
-        alert('Erro ao atualizar artista');
+        const errorMessage = await response.json();
+        alert('Erro ao atualizar artista: ' + errorMessage.error);
     }
 }
 
@@ -250,7 +241,7 @@ async function deleteArtist(id) {
     });
     if (response.ok) {
         alert('Artista excluído com sucesso!');
-        await displayArtists();
+        displayArtists();
     } else {
         alert('Erro ao excluir artista');
     }

@@ -1,26 +1,43 @@
 const express = require('express');
-const { Artist, Album } = require('../models'); // Ajuste o caminho conforme necessário
+const { Artist, Album, Genre } = require('../models');
 
 const router = express.Router();
 
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
 
+// Buscar todos os artistas junto com os seus gêneros e álbuns
 router.get('/', async (req, res) => {
     try {
-        const artists = await Artist.findAll();
+        const artists = await Artist.findAll({
+            include: [
+                { model: Genre, as: 'genres' },
+                { model: Album, as: 'albums' }
+            ]
+        });
         res.json(artists);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
+// Criar um novo artista com gêneros e álbuns associados
 router.post('/', async (req, res) => {
     try {
-        const { name, genre, albumIds } = req.body; // Alteração aqui para receber albumIds
-        const artist = await Artist.create({ name, genre });
+        const { name, genreIds, albumIds } = req.body;
+        const artist = await Artist.create({ name });
 
-        // Se albumIds for fornecido, associar os álbuns ao artista
+        if (genreIds && genreIds.length > 0) {
+            const genres = await Genre.findAll({ where: { id: genreIds } });
+
+            const invalidGenres = genreIds.length !== genres.length;
+            if (invalidGenres) {
+                return res.status(400).json({ error: "Um ou mais IDs de gêneros são inválidos." });
+            }
+
+            await artist.setGenres(genres);
+        }
+
         if (albumIds && albumIds.length > 0) {
             const albums = await Album.findAll({ where: { id: albumIds } });
             await artist.setAlbums(albums);
@@ -32,9 +49,10 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Atualizar um artista com gêneros e álbuns associados
 router.put('/:id', async (req, res) => {
     try {
-        const { name, genre } = req.body;
+        const { name, genreIds, albumIds } = req.body;
         const artist = await Artist.findByPk(req.params.id);
 
         if (!artist) {
@@ -42,8 +60,27 @@ router.put('/:id', async (req, res) => {
         }
 
         artist.name = name;
-        artist.genre = genre;
         await artist.save();
+
+        if (genreIds && genreIds.length > 0) {
+            const genres = await Genre.findAll({ where: { id: genreIds } });
+
+            const invalidGenres = genreIds.length !== genres.length;
+            if (invalidGenres) {
+                return res.status(400).json({ error: "Um ou mais IDs de gêneros são inválidos." });
+            }
+
+            await artist.setGenres(genres);
+        } else {
+            await artist.setGenres([]);
+        }
+
+        if (albumIds && albumIds.length > 0) {
+            const albums = await Album.findAll({ where: { id: albumIds } });
+            await artist.setAlbums(albums);
+        } else {
+            await artist.setAlbums([]);
+        }
 
         res.json(artist);
     } catch (error) {

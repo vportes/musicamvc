@@ -1,62 +1,92 @@
-const db = require('../models');
+const express = require('express');
+const { Artist, Album, Genre } = require('../models');
 
-// Criar um artista
-exports.createArtist = async (req, res) => {
+const router = express.Router();
+
+router.use(express.json());
+router.use(express.urlencoded({ extended: true }));
+
+// Buscar todos os artistas com seus gêneros e álbuns
+router.get('/', async (req, res) => {
     try {
-        const { name, genre } = req.body;
-        const artist = await db.Artist.create({ name, genre });
+        const artists = await Artist.findAll({
+            include: [
+                { model: Genre, as: 'genres' },
+                { model: Album, as: 'albums' }
+            ]
+        });
+        res.json(artists);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Criar um novo artista com gêneros e álbuns associados
+router.post('/', async (req, res) => {
+    try {
+        const { name, genreIds, albumIds } = req.body;
+        const artist = await Artist.create({ name });
+
+        if (genreIds && genreIds.length > 0) {
+            const genres = await Genre.findAll({ where: { id: genreIds } });
+            await artist.setGenres(genres);
+        }
+
+        if (albumIds && albumIds.length > 0) {
+            const albums = await Album.findAll({ where: { id: albumIds } });
+            await artist.setAlbums(albums);
+        }
+
         res.status(201).json(artist);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erro ao criar artista' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-};
+});
 
-// Buscar todos os artistas
-exports.getArtists = async (req, res) => {
+// Atualizar um artista com gêneros e álbuns associados
+router.put('/:id', async (req, res) => {
     try {
-        const artists = await db.Artist.findAll();
-        res.status(200).json(artists);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erro ao buscar artistas' });
-    }
-};
-
-// Editar artista
-exports.updateArtist = async (req, res) => {
-    try {
-        const { name, genre } = req.body;
-        const artist = await db.Artist.findByPk(req.params.id);
+        const { name, genreIds, albumIds } = req.body;
+        const artist = await Artist.findByPk(req.params.id);
 
         if (!artist) {
             return res.status(404).json({ error: 'Artista não encontrado' });
         }
 
         artist.name = name;
-        artist.genre = genre;
         await artist.save();
 
-        res.status(200).json(artist);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erro ao editar artista' });
+        if (genreIds && genreIds.length > 0) {
+            const genres = await Genre.findAll({ where: { id: genreIds } });
+            await artist.setGenres(genres);
+        } else {
+            await artist.setGenres([]);
+        }
+
+        if (albumIds && albumIds.length > 0) {
+            const albums = await Album.findAll({ where: { id: albumIds } });
+            await artist.setAlbums(albums);
+        } else {
+            await artist.setAlbums([]);
+        }
+
+        res.json(artist);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-};
+});
 
-// Excluir artista
-exports.deleteArtist = async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
-        const artist = await db.Artist.findByPk(req.params.id);
-
+        const artist = await Artist.findByPk(req.params.id);
         if (!artist) {
             return res.status(404).json({ error: 'Artista não encontrado' });
         }
-
         await artist.destroy();
-        res.status(200).json({ message: 'Artista excluído com sucesso' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erro ao excluir artista' });
+        res.status(204).end();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-};
+});
+
+module.exports = router;

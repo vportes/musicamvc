@@ -31,13 +31,6 @@
     </div>
   </section>
 
-  <section class="list-section">
-    <h2>Gêneros</h2>
-    <div id="genres-list" class="list-container">
-      <!-- Gêneros serão carregados aqui -->
-    </div>
-  </section>
-
   <!-- Seções de Formulários -->
   <section class="form-section">
     <h2>Adicionar Novo Álbum</h2>
@@ -61,7 +54,7 @@
         <!-- Opções de gêneros serão carregadas aqui -->
       </select>
 
-      <button type="submit">Adicionar Álbum</button>
+      <button type="submit" class="primary-button">Adicionar Álbum</button>
     </form>
   </section>
 
@@ -72,7 +65,7 @@
       <input type="text" id="artist-name" name="name" placeholder="Nome do Artista" required>
 
       <label for="artist-genre">Gênero</label>
-      <select id="artist-genre" name="genre" required>
+      <select id="artist-genre" name="genre" multiple required>
         <!-- Opções de gêneros serão carregadas aqui -->
       </select>
 
@@ -81,11 +74,9 @@
         <!-- Opções de álbuns serão carregadas aqui -->
       </select>
 
-      <button type="submit">Adicionar Artista</button>
+      <button type="submit" class="primary-button">Adicionar Artista</button>
     </form>
   </section>
-
-
 
   <section class="form-section">
     <h2>Adicionar Novo Gênero</h2>
@@ -93,7 +84,7 @@
       <label for="genre-name">Nome do Gênero</label>
       <input type="text" id="genre-name" name="name" placeholder="Nome do Gênero" required>
 
-      <button type="submit">Adicionar Gênero</button>
+      <button type="submit" class="primary-button">Adicionar Gênero</button>
     </form>
   </section>
 </div>
