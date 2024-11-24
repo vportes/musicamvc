@@ -10,18 +10,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('/api/albums');
             if (response.ok) {
                 const albums = await response.json();
+                const albumList = document.getElementById('albums-list');
+                const albumArtistsSelect = document.getElementById('album-artists');
+                const artistAlbumsSelect = document.getElementById('artist-albums'); // Novo
+
                 albumList.innerHTML = '';
+                albumArtistsSelect.innerHTML = '';
+                artistAlbumsSelect.innerHTML = ''; // Limpa as opções de álbuns no formulário do artista
+
                 albums.forEach(album => {
                     const li = document.createElement('li');
                     li.innerHTML = `
-                        <strong>${album.title}</strong> (${album.year})<br>
-                        Artistas: ${album.artists.map(artist => artist.name).join(', ')}<br>
-                        Faixas: ${album.tracks.map(track => track.title).join(', ')}<br>
-                        Gêneros: ${album.genres.map(genre => genre.name).join(', ')}<br>
-                        <button onclick="updateAlbum(${album.id})">Editar</button>
-                        <button onclick="deleteAlbum(${album.id})">Excluir</button>
-                    `;
+                    <strong>${album.title}</strong> (${album.year})<br>
+                    Artistas: ${album.artists.map(artist => artist.name).join(', ')}<br>
+                    Faixas: ${album.tracks.map(track => track.title).join(', ')}<br>
+                    Gêneros: ${album.genres.map(genre => genre.name).join(', ')}<br>
+                    <button onclick="updateAlbum(${album.id})">Editar</button>
+                    <button onclick="deleteAlbum(${album.id})">Excluir</button>
+                `;
                     albumList.appendChild(li);
+
+                    const artistOption = document.createElement('option'); // Novo
+                    artistOption.value = album.id;
+                    artistOption.text = album.title;
+                    artistAlbumsSelect.appendChild(artistOption);
+
+                    const albumOption = document.createElement('option');
+                    albumOption.value = album.id;
+                    albumOption.text = album.title;
+                    albumArtistsSelect.appendChild(albumOption);
                 });
             } else {
                 console.error('Erro ao listar álbuns:', response.statusText);
@@ -64,6 +81,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('/api/genres');
             if (response.ok) {
                 const genres = await response.json();
+                const genreSelect = document.getElementById('artist-genre');
+                genreSelect.innerHTML = '';
                 genreList.innerHTML = '';
                 albumGenresSelect.innerHTML = '';
                 genres.forEach(genre => {
@@ -126,12 +145,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const name = document.getElementById('artist-name').value;
         const genre = document.getElementById('artist-genre').value;
+        const albums = Array.from(document.getElementById('artist-albums').selectedOptions).map(option => option.value);
 
         try {
             const response = await fetch('/api/artists', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, genre }),
+                body: JSON.stringify({ name, genre, albumIds: albums }),
             });
 
             if (response.ok) {

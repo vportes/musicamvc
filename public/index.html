@@ -72,11 +72,20 @@
       <input type="text" id="artist-name" name="name" placeholder="Nome do Artista" required>
 
       <label for="artist-genre">Gênero</label>
-      <input type="text" id="artist-genre" name="genre" placeholder="Gênero do Artista" required>
+      <select id="artist-genre" name="genre" required>
+        <!-- Opções de gêneros serão carregadas aqui -->
+      </select>
+
+      <label for="artist-albums">Álbuns</label>
+      <select id="artist-albums" name="albums" multiple>
+        <!-- Opções de álbuns serão carregadas aqui -->
+      </select>
 
       <button type="submit">Adicionar Artista</button>
     </form>
   </section>
+
+
 
   <section class="form-section">
     <h2>Adicionar Novo Gênero</h2>

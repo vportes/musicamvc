@@ -1,5 +1,5 @@
 const express = require('express');
-const { Artist } = require('../models'); // Ajuste o caminho conforme necessário
+const { Artist, Album } = require('../models'); // Ajuste o caminho conforme necessário
 
 const router = express.Router();
 
@@ -17,8 +17,15 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { name, genre } = req.body;
+        const { name, genre, albumIds } = req.body; // Alteração aqui para receber albumIds
         const artist = await Artist.create({ name, genre });
+
+        // Se albumIds for fornecido, associar os álbuns ao artista
+        if (albumIds && albumIds.length > 0) {
+            const albums = await Album.findAll({ where: { id: albumIds } });
+            await artist.setAlbums(albums);
+        }
+
         res.status(201).json(artist);
     } catch (error) {
         res.status(500).json({ error: error.message });
