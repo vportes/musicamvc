@@ -6,13 +6,12 @@ const router = express.Router();
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
 
-// Buscar todos os artistas junto com os seus gêneros e álbuns
 router.get('/', async (req, res) => {
     try {
         const artists = await Artist.findAll({
             include: [
-                { model: Genre, as: 'genres' },
-                { model: Album, as: 'albums' }
+                { model: Genre, as: 'genres', through: { attributes: [] } },
+                { model: Album, as: 'albums', through: { attributes: [] } }
             ]
         });
         res.json(artists);
@@ -21,7 +20,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Criar um novo artista com gêneros e álbuns associados
 router.post('/', async (req, res) => {
     try {
         const { name, genreIds, albumIds } = req.body;
@@ -43,13 +41,19 @@ router.post('/', async (req, res) => {
             await artist.setAlbums(albums);
         }
 
-        res.status(201).json(artist);
+        const createdArtist = await Artist.findByPk(artist.id, {
+            include: [
+                { model: Genre, as: 'genres', through: { attributes: [] } },
+                { model: Album, as: 'albums', through: { attributes: [] } }
+            ]
+        });
+
+        res.status(201).json(createdArtist);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Atualizar um artista com gêneros e álbuns associados
 router.put('/:id', async (req, res) => {
     try {
         const { name, genreIds, albumIds } = req.body;
@@ -82,7 +86,14 @@ router.put('/:id', async (req, res) => {
             await artist.setAlbums([]);
         }
 
-        res.json(artist);
+        const updatedArtist = await Artist.findByPk(artist.id, {
+            include: [
+                { model: Genre, as: 'genres', through: { attributes: [] } },
+                { model: Album, as: 'albums', through: { attributes: [] } }
+            ]
+        });
+
+        res.json(updatedArtist);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

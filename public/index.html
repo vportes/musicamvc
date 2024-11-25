@@ -31,6 +31,13 @@
     </div>
   </section>
 
+  <section class="list-section">
+    <h2>Gêneros</h2>
+    <div id="genres-list" class="list-container">
+      <!-- Gêneros serão carregados aqui -->
+    </div>
+  </section>
+
   <!-- Seções de Formulários -->
   <section class="form-section">
     <h2>Adicionar Novo Álbum</h2>
@@ -43,6 +50,9 @@
 
       <label for="album-tracks">Faixas</label>
       <textarea id="album-tracks" name="tracks" placeholder="Lista de faixas no formato título|duração, separadas por vírgula" required></textarea>
+
+      <label for="album-cover">Capa do Álbum</label>
+      <input type="file" id="album-cover" name="cover" accept="image/*">
 
       <label for="album-artists">Artistas</label>
       <select id="album-artists" name="artists" multiple required>

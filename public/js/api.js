@@ -1,9 +1,34 @@
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
-const { Album, Artist, Genre, Track } = require('../../models');
+const dotenv = require('dotenv');
+const albumRoutes = require('/routes/albumRoutes');
+const artistRoutes = require('/routes/artistRoutes');
+const genreRoutes = require('/routes/genreRoutes');
+const { Sequelize, DataTypes } = require('sequelize');
+
+// Carregar configurações do arquivo .env
+dotenv.config();
+
+// Configuração do Sequelize
+const sequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD,
+    {
+        host: process.env.DB_HOST,
+        dialect: 'mysql',
+    }
+);
+
+// Importar modelos
+const Album = require('/models/album')(sequelize, DataTypes);
+const Artist = require('/models/artist')(sequelize, DataTypes);
+const Genre = require('/models/genre')(sequelize, DataTypes);
+const Track = require('/models/track')(sequelize, DataTypes);
+
+// Cria instância do express
 const app = express();
-const port = 3000;
 
 // Configuração para lidar com uploads de imagem (capa do álbum)
 const storage = multer.diskStorage({
@@ -16,7 +41,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Middleware para analisar o corpo da requisição
+// middleware para servir arquivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware para parsing de JSON e dados de formulários
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -24,15 +52,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Endpoints de Disco (Album)
-app.get('/api/albums', async (req, res) => {
+app.get('/api/artists', async (req, res) => {
     try {
-        const albums = await Album.findAll({
+        const artists = await Artist.findAll({
             include: [
-                { model: Artist, as: 'artists' },
-                { model: Genre, as: 'genres' }
+                { model: Genre, as: 'genres' },
+                { model: Album, as: 'albums' }
             ]
         });
-        res.json(albums);
+        res.json({ artists });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -43,7 +71,8 @@ app.get('/api/albums/:id', async (req, res) => {
         const album = await Album.findByPk(req.params.id, {
             include: [
                 { model: Artist, as: 'artists' },
-                { model: Genre, as: 'genres' }
+                { model: Genre, as: 'genres' },
+                { model: Track, as: 'albumTracks' }
             ]
         });
         if (album) {
@@ -62,12 +91,14 @@ app.post('/api/albums', upload.single('cover'), async (req, res) => {
         const album = await Album.create({
             title,
             year,
-            cover: req.file ? req.file.path : null,
+            cover: req.file ? `/uploads/${req.file.filename}` : null,
             tracks: JSON.parse(tracks)
         });
+
         if (artists && artists.length > 0) {
             await album.setArtists(artists);
         }
+
         if (genres && genres.length > 0) {
             await album.setGenres(genres);
         }
@@ -90,13 +121,14 @@ app.put('/api/albums/:id', upload.single('cover'), async (req, res) => {
         album.title = title;
         album.year = year;
         album.tracks = JSON.parse(tracks);
-        if (req.file) album.cover = req.file.path;
+        if (req.file) album.cover = `/uploads/${req.file.filename}`;
         await album.save();
 
-        // Atualizar associações
+        // Update associations with correct alias
         if (artists && artists.length > 0) {
             await album.setArtists(artists);
         }
+
         if (genres && genres.length > 0) {
             await album.setGenres(genres);
         }
@@ -123,8 +155,13 @@ app.delete('/api/albums/:id', async (req, res) => {
 // Endpoints de Artista
 app.get('/api/artists', async (req, res) => {
     try {
-        const artists = await Artist.findAll();
-        res.json(artists);
+        const artists = await Artist.findAll({
+            include: [
+                { model: Genre, as: 'genres' },
+                { model: Album, as: 'albums' }
+            ]
+        });
+        res.json({ artists });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -132,7 +169,7 @@ app.get('/api/artists', async (req, res) => {
 
 app.post('/api/artists', async (req, res) => {
     try {
-        const { name, genre, albumIds, genreIds } = req.body; // Alteração aqui para receber genreIds
+        const { name, genreIds, albumIds } = req.body;
         const artist = await Artist.create({ name });
 
         if (genreIds && genreIds.length > 0) {
@@ -151,9 +188,9 @@ app.post('/api/artists', async (req, res) => {
     }
 });
 
-router.put('/api/artists/:id', async (req, res) => {
+app.put('/api/artists/:id', async (req, res) => {
     try {
-        const { name, genre, genreIds, albumIds } = req.body;
+        const { name, genreIds, albumIds } = req.body;
         const artist = await Artist.findByPk(req.params.id);
 
         if (!artist) {
@@ -193,30 +230,41 @@ app.delete('/api/artists/:id', async (req, res) => {
 });
 
 // Endpoints de Gênero
-// Endpoint para listar gêneros
 app.get('/api/genres', async (req, res) => {
     try {
         const genres = await Genre.findAll();
-        console.log("Gêneros encontrados:", genres);  // Log para verificar
         res.json(genres);
     } catch (error) {
-        console.error("Erro ao buscar gêneros:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Endpoint para criar gênero
 app.post('/api/genres', async (req, res) => {
     try {
         const { name } = req.body;
         const genre = await Genre.create({ name });
-        res.status(201).json(genre);  // Retorna o gênero criado
+        res.status(201).json(genre);
     } catch (error) {
-        console.error("Erro ao criar gênero:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
+app.put('/api/genres/:id', async (req, res) => {
+    try {
+        const { name } = req.body;
+        const genre = await Genre.findByPk(req.params.id);
+
+        if (!genre) {
+            return res.status(404).json({ error: 'Gênero não encontrado' });
+        }
+
+        genre.name = name;
+        await genre.save();
+        res.json(genre);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 app.delete('/api/genres/:id', async (req, res) => {
     try {
@@ -231,7 +279,6 @@ app.delete('/api/genres/:id', async (req, res) => {
     }
 });
 
-// Iniciar o servidor
-app.listen(port, () => {
-    console.log(`Servidor rodando em http://localhost:${port}`);
+app.listen(3000, () => {
+    console.log(`Servidor rodando em http://localhost:3000`);
 });

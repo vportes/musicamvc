@@ -26,6 +26,7 @@ db.Artist = require('./artist')(sequelize, Sequelize);
 db.Genre = require('./genre')(sequelize, Sequelize);
 db.Track = require('./track')(sequelize, Sequelize);
 
+// Associations
 db.Album.belongsToMany(db.Artist, { through: 'AlbumArtists', as: 'artists' });
 db.Artist.belongsToMany(db.Album, { through: 'AlbumArtists', as: 'albums' });
 
@@ -36,7 +37,7 @@ db.Artist.belongsToMany(db.Genre, { through: 'ArtistGenres', as: 'genres' });
 db.Genre.belongsToMany(db.Artist, { through: 'ArtistGenres', as: 'artists' });
 
 db.Track.belongsTo(db.Album, { as: 'album' });
-db.Album.hasMany(db.Track, { as: 'tracks' });
+db.Album.hasMany(db.Track, { as: 'albumTracks' }); // Renamed association
 
 sequelize.sync({ force: false })
     .then(() => {

@@ -1,17 +1,11 @@
 module.exports = (sequelize, DataTypes) => {
     const Track = sequelize.define('Track', {
-        title: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        duration: {
-            type: DataTypes.INTEGER,
-            allowNull: true, // Permite valores nulos
-            defaultValue: 0, // Ou defina um valor padrão
-        },
+        title: DataTypes.STRING,
+        duration: DataTypes.INTEGER
     });
-    Track.associate = (models) => {
-        Track.belongsTo(models.Album);
+
+    Track.associate = function(models) {
+        Track.belongsTo(models.Album, { as: 'album', foreignKey: 'albumId' });
     };
 
     return Track;
