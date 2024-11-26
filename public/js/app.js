@@ -1,107 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const albumList = document.getElementById('albums-list');
     const artistList = document.getElementById('artists-list');
-    const genreList = document.getElementById('genres-list');
-    const searchBar = document.getElementById('search-bar');
-    const searchButton = document.getElementById('search-button');
-
-    searchButton.addEventListener('click', performSearch);
-
-    async function performSearch() {
-        const query = searchBar.value.trim().toLowerCase();
-        console.log(`Search query: ${query}`);
-
-        if (!query) {
-            await displayAlbums();
-            await displayArtists();
-            await displayGenres();
-            return;
-        }
-
-        await searchAlbums(query);
-        await searchArtists(query);
-        await searchGenres(query);
-    }
-
-    async function searchAlbums(query) {
-        try {
-            const response = await fetch(`/api/search/albums?q=${query}`);
-            console.log(`Albums search response status: ${response.status}`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Albums data:', data);
-                const albums = data.albums;
-                albumList.innerHTML = '';
-                albums.forEach(album => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                    ${album.cover ? `<img src="${album.cover}" alt="Album Cover" style="height: 100px;">` : ''}
-                    <strong>${album.title}</strong> (${album.year})<br>
-                    Artistas: ${album.artists.map(artist => artist.name).join(', ')}<br>
-                    Faixas: ${album.tracks.map(track => track.title).join(', ')}<br>
-                    Gêneros: ${album.genres.map(genre => genre.name).join(', ')}<br>
-                    <button class="primary-button" onclick="updateAlbum(${album.id})">Editar</button>
-                    <button class="primary-button" onclick="deleteAlbum(${album.id})">Excluir</button>
-                `;
-                    albumList.appendChild(li);
-                });
-            } else {
-                console.error('Erro ao buscar álbuns:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar álbuns:', error);
-        }
-    }
-
-    async function searchArtists(query) {
-        try {
-            const response = await fetch(`/api/search/artists?q=${query}`);
-            console.log(`Artists search response status: ${response.status}`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Artists data:', data);
-                const artists = data.artists;
-                artistList.innerHTML = '';
-                artists.forEach(artist => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                    <strong>${artist.name}</strong> - Gêneros: ${artist.genres.map(genre => genre.name).join(', ')}<br>
-                    <button class="primary-button" onclick="updateArtist(${artist.id})">Editar</button>
-                    <button class="primary-button" onclick="deleteArtist(${artist.id})">Excluir</button>
-                `;
-                    artistList.appendChild(li);
-                });
-            } else {
-                console.error('Erro ao buscar artistas:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar artistas:', error);
-        }
-    }
-
-    async function searchGenres(query) {
-        try {
-            const response = await fetch(`/api/search/genres?q=${query}`);
-            console.log(`Genres search response status: ${response.status}`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Genres data:', data);
-                const genres = data.genres;
-                genreList.innerHTML = '';
-                genres.forEach(genre => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<strong>${genre.name}</strong>
-                    <button class="primary-button" onclick="updateGenre(${genre.id})">Editar</button>
-                    <button class="primary-button" onclick="deleteGenre(${genre.id})">Excluir</button>`;
-                    genreList.appendChild(li);
-                });
-            } else {
-                console.error('Erro ao buscar gêneros:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar gêneros:', error);
-        }
-    }
+    const genreList = document.getElementById('genres-list'); // Reference to genre list container
+    const albumArtistsSelect = document.getElementById('album-artists');
+    const albumGenresSelect = document.getElementById('album-genres');
+    const artistGenreSelect = document.getElementById('artist-genre'); // Reference to artist genre select
 
     async function displayAlbums() {
         try {
@@ -117,8 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ${album.cover ? `<img src="${album.cover}" alt="Album Cover" style="height: 100px;">` : ''}
                     <strong>${album.title}</strong> (${album.year})<br>
                     Artistas: ${album.artists.map(artist => artist.name).join(', ')}<br>
-                    Faixas: ${album.tracks.map(track => track.title).join(', ')}<br>
-                    Gêneros: ${album.genres.map(genre => genre.name).join(', ')}<br>
+                    Faixas: ${album.albumTracks.map(track => track.title).join(', ')}<br>
+                    Gêneros: ${album.genres.map(genre => genre.name).join(', ') || 'N/A'}<br>
                     <button class="primary-button" onclick="updateAlbum(${album.id})">Editar</button>
                     <button class="primary-button" onclick="deleteAlbum(${album.id})">Excluir</button>
                 `;
@@ -137,12 +40,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('/api/artists');
             if (response.ok) {
                 const data = await response.json();
-                console.log('Artists data from API:', data);
-                const artists = data.artists || data;
+                console.log('Artists data from API:', data); // Log the API response
+                const artists = data.artists || data; // Use data.artists if it exists, else data
                 artistList.innerHTML = '';
 
                 artists.forEach(artist => {
-                    console.log('Processing artist:', artist);
+                    console.log('Processing artist:', artist); // Log each artist
                     const li = document.createElement('li');
                     li.innerHTML = `
                     <strong>${artist.name}</strong> - Gêneros: ${artist.genres.map(genre => genre.name).join(', ')}<br>
@@ -152,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     artistList.appendChild(li);
                 });
 
-                populateSelect(albumArtistsSelect, artists);
+                populateSelect(albumArtistsSelect, artists); // Ensure artists are populated in the album form
             } else {
                 console.error('Erro ao listar artistas:', response.statusText);
             }
@@ -166,15 +69,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('/api/genres');
             if (response.ok) {
                 const genres = await response.json();
-                genreList.innerHTML = '';
+                genreList.innerHTML = ''; // Clear the genres list
+
                 genres.forEach(genre => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<strong>${genre.name}</strong> 
-                    <button class="primary-button" onclick="updateGenre(${genre.id})">Editar</button> 
-                    <button class="primary-button" onclick="deleteGenre(${genre.id})">Excluir</button>`;
+                    li.innerHTML = `<strong>${genre.name}</strong> <button class="primary-button" onclick="updateGenre(${genre.id})">Editar</button> <button class="primary-button" onclick="deleteGenre(${genre.id})">Excluir</button>`;
                     genreList.appendChild(li);
                 });
 
+                // Populate genre selects in the form
                 populateSelect(albumGenresSelect, genres);
                 populateSelect(artistGenreSelect, genres);
             } else {
@@ -186,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function populateSelect(selectElement, items) {
-        selectElement.innerHTML = '';
+        selectElement.innerHTML = ''; // Clear existing options
         items.forEach(item => {
             const option = document.createElement('option');
             option.value = item.id;
@@ -205,8 +108,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const artistsData = await artistsResponse.json();
             const genresData = await genresResponse.json();
 
-            const artists = artistsData.artists || artistsData;
-            const genres = genresData.genres || genresData;
+            const artists = artistsData.artists || artistsData; // Handle the nested artist data
+            const genres = genresData.genres || genresData; // Handle the nested genre data
 
             populateSelect(albumArtistsSelect, artists);
             populateSelect(albumGenresSelect, genres);
@@ -217,9 +120,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const albumForm = document.getElementById('albumForm');
+
     albumForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const formData = new FormData(albumForm);
+
         const tracksArray = formData.get('tracks').split(',').map(track => {
             const [title, duration] = track.trim().split('|');
             return { title, duration: parseInt(duration, 10) || 0 };
@@ -250,6 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const artistForm = document.getElementById('artistForm');
     artistForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const name = document.getElementById('artist-name').value;
         const genres = Array.from(document.getElementById('artist-genre').selectedOptions).map(option => option.value);
         const albums = Array.from(document.getElementById('artist-albums').selectedOptions).map(option => option.value);
@@ -280,6 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const genreForm = document.getElementById('genreForm');
     genreForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const name = document.getElementById('genre-name').value;
 
         try {
@@ -315,6 +223,7 @@ async function updateAlbum(id) {
     const newTitle = prompt('Digite o novo título do álbum:');
     const newYear = prompt('Digite o novo ano do álbum:');
     const newTracks = prompt('Digite as novas faixas no formato título|duração, separadas por vírgula:');
+
     const tracksArray = newTracks.split(',').map(track => {
         const [title, duration] = track.trim().split('|');
         return { title, duration: parseInt(duration, 10) || 0 };
