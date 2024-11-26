@@ -10,12 +10,13 @@ router.get('/albums', async (req, res) => {
         const albums = await Album.findAll({
             include: [
                 { model: Artist, as: 'artists' },
-                { model: Genre, as: 'genres' }
+                { model: Genre, as: 'genres', where: { name: { [Op.like]: `%${query}%` } }, required: false }
             ],
             where: {
-                title: {
-                    [Op.like]: `%${query}%`
-                }
+                [Op.or]: [
+                    { title: { [Op.like]: `%${query}%` } },
+                    { '$genres.name$': { [Op.like]: `%${query}%` } }
+                ]
             }
         });
         res.json({ albums });
@@ -30,13 +31,14 @@ router.get('/artists', async (req, res) => {
         const query = req.query.q.toLowerCase();
         const artists = await Artist.findAll({
             include: [
-                { model: Genre, as: 'genres' },
+                { model: Genre, as: 'genres', where: { name: { [Op.like]: `%${query}%` } }, required: false },
                 { model: Album, as: 'albums' }
             ],
             where: {
-                name: {
-                    [Op.like]: `%${query}%`
-                }
+                [Op.or]: [
+                    { name: { [Op.like]: `%${query}%` } },
+                    { '$genres.name$': { [Op.like]: `%${query}%` } }
+                ]
             }
         });
         res.json({ artists });
@@ -50,11 +52,7 @@ router.get('/genres', async (req, res) => {
     try {
         const query = req.query.q.toLowerCase();
         const genres = await Genre.findAll({
-            where: {
-                name: {
-                    [Op.like]: `%${query}%`
-                }
-            }
+            where: { name: { [Op.like]: `%${query}%` } }
         });
         res.json({ genres });
     } catch (error) {

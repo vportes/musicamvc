@@ -5,12 +5,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchBar = document.getElementById('search-bar');
     const searchButton = document.getElementById('search-button');
 
+    const albumArtistsSelect = document.getElementById('album-artists');
+    const albumGenresSelect = document.getElementById('album-genres');
+    const artistGenreSelect = document.getElementById('artist-genre');
+
     searchButton.addEventListener('click', performSearch);
 
     async function performSearch() {
         const query = searchBar.value.trim().toLowerCase();
-        console.log(`Search query: ${query}`);
-
         if (!query) {
             await displayAlbums();
             await displayArtists();
@@ -18,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Realiza as buscas
         await searchAlbums(query);
         await searchArtists(query);
         await searchGenres(query);
@@ -110,7 +113,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await response.json();
                 const albums = data.albums;
                 albumList.innerHTML = '';
-
                 albums.forEach(album => {
                     const li = document.createElement('li');
                     li.innerHTML = `
@@ -124,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
                     albumList.appendChild(li);
                 });
+                await populateArtistsGenresSelects();
             } else {
                 console.error('Erro ao listar álbuns:', response.statusText);
             }
@@ -137,12 +140,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('/api/artists');
             if (response.ok) {
                 const data = await response.json();
-                console.log('Artists data from API:', data);
                 const artists = data.artists || data;
                 artistList.innerHTML = '';
-
                 artists.forEach(artist => {
-                    console.log('Processing artist:', artist);
                     const li = document.createElement('li');
                     li.innerHTML = `
                     <strong>${artist.name}</strong> - Gêneros: ${artist.genres.map(genre => genre.name).join(', ')}<br>
@@ -151,8 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
                     artistList.appendChild(li);
                 });
-
-                populateSelect(albumArtistsSelect, artists);
+                await populateArtistsGenresSelects();
             } else {
                 console.error('Erro ao listar artistas:', response.statusText);
             }
@@ -169,14 +168,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 genreList.innerHTML = '';
                 genres.forEach(genre => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<strong>${genre.name}</strong> 
-                    <button class="primary-button" onclick="updateGenre(${genre.id})">Editar</button> 
+                    li.innerHTML = `
+                    <strong>${genre.name}</strong>
+                    <button class="primary-button" onclick="updateGenre(${genre.id})">Editar</button>
                     <button class="primary-button" onclick="deleteGenre(${genre.id})">Excluir</button>`;
                     genreList.appendChild(li);
                 });
-
-                populateSelect(albumGenresSelect, genres);
-                populateSelect(artistGenreSelect, genres);
+                await populateArtistsGenresSelects();
             } else {
                 console.error('Erro ao listar gêneros:', response.statusText);
             }
