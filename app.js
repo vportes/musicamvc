@@ -22,6 +22,7 @@ const Album = require('./models/album')(sequelize, DataTypes);
 const Artist = require('./models/artist')(sequelize, DataTypes);
 const Genre = require('./models/genre')(sequelize, DataTypes);
 const Track = require('./models/track')(sequelize, DataTypes);
+const searchRoutes = require('./routes/searchRoutes');
 
 Album.associate = function(models) {
     Album.belongsToMany(models.Artist, { through: 'AlbumArtists', as: 'artists', foreignKey: 'albumId' });
@@ -57,6 +58,9 @@ app.use('/api/artists', artistRoutes);
 app.use('/api/genres', genreRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.use('/api/search', searchRoutes);
+
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
